@@ -1,0 +1,13 @@
+{
+  "name": "slidefast-ai",
+  "version": "1.0.0",
+  "description": "AI-powered presentation platform",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Build completed - static files ready'",
+    "start": "echo 'Serving static files'"
+  },
+  "keywords": ["presentations", "ai", "slides"],
+  "author": "MiniMax Agent",
+  "license": "MIT"
+}
