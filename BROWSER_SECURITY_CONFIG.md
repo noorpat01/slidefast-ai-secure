@@ -24,7 +24,7 @@ The following Google OAuth domains are explicitly allowed:
 - ssl.gstatic.com (Secure Google static resources)
 
 ### Supabase Integration
-- xhlpnnoskmewqkjriqxq.supabase.co (Supabase backend)
+- api.slidefast.ai (Proxied Supabase backend)
 - Connect and frame sources configured for OAuth callback handling
 
 ## File Configurations
@@ -58,8 +58,8 @@ Fixed redirect URL mismatches that were causing cookie domain errors:
 
 ### Google Cloud Console Requirements
 Ensure these URLs are in authorized redirect URIs:
-- https://c1yzp1kcwhjp.space.minimax.io/auth/callback
-- https://xhlpnnoskmewqkjriqxq.supabase.co/auth/v1/callback
+- https://slidefast.ai/auth/callback
+- https://api.slidefast.ai/auth/v1/callback
 
 ## Browser Compatibility
 

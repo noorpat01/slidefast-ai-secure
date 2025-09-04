@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xhlpnnoskmewqkjriqxq.supabase.co'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://api.slidefast.ai'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhobHBubm9za21ld3FranJpcXhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTUwMTUsImV4cCI6MjA3MTM3MTAxNX0.p2nCOu1Bs63aVeKt0_Z5u7h28kMmCO_HSXkNiXfeMKQ'
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
