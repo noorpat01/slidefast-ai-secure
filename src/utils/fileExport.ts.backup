@@ -1,0 +1,2452 @@
+import jsPDF from 'jspdf'
+import PptxGenJS from 'pptxgenjs'
+
+// Professional color schemes based on consulting firm standards
+const PROFESSIONAL_COLORS = {
+  // Primary trust colors (blues)
+  PRIMARY_BLUE: '#003366',
+  ACCENT_BLUE: '#0066CC',
+  LIGHT_BLUE: '#E6F2FF',
+  
+  // Supporting colors
+  DARK_GRAY: '#2C3E50',
+  MEDIUM_GRAY: '#7F8C8D',
+  LIGHT_GRAY: '#ECF0F1',
+  
+  // Accent colors
+  SUCCESS_GREEN: '#27AE60',
+  WARNING_ORANGE: '#E67E22',
+  ERROR_RED: '#C0392B',
+  
+  // Text colors
+  PRIMARY_TEXT: '#2C3E50',
+  SECONDARY_TEXT: '#7F8C8D',
+  WHITE_TEXT: '#FFFFFF'
+}
+
+// Typography standards (consulting firm grade)
+const TYPOGRAPHY = {
+  // Headers (minimum 24pt as per accessibility guidelines)
+  H1_SIZE: 28,
+  H2_SIZE: 24,
+  H3_SIZE: 20,
+  
+  // Body text (minimum 18pt for accessibility)
+  BODY_SIZE: 18,
+  CAPTION_SIZE: 14,
+  
+  // Font families (sans-serif for accessibility)
+  PRIMARY_FONT: 'Arial, sans-serif',
+  SECONDARY_FONT: 'Helvetica, sans-serif',
+  
+  // Line height for readability
+  LINE_HEIGHT: 1.6
+}
+
+// Layout constants following Pyramid Principle
+const LAYOUT = {
+  MARGIN: 25,
+  COLUMN_GAP: 20,
+  SECTION_SPACING: 30,
+  PARAGRAPH_SPACING: 16,
+  BULLET_INDENT: 15
+}
+
+interface Slide {
+  id: string
+  title: string
+  content: string[]
+  speaker_notes?: string
+  visual_suggestion?: string
+}
+
+interface PresentationData {
+  id: string
+  title: string
+  description?: string
+  content?: {
+    slides: Slide[]
+    metadata?: {
+      audience_level?: string
+      presentation_style?: string
+      topic?: string
+      author?: string
+      company?: string
+    }
+  }
+}
+
+/**
+ * Generate professional-grade PDF following McKinsey/BCG standards
+ */
+export const exportToPDF = async (presentation: PresentationData): Promise<void> => {
+  const pdf = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4',
+    compress: true
+  })
+
+  const slides = presentation.content?.slides || []
+  const pageWidth = pdf.internal.pageSize.getWidth()
+  const pageHeight = pdf.internal.pageSize.getHeight()
+  const metadata = presentation.content?.metadata || {}
+
+  // Set document metadata for accessibility
+  pdf.setProperties({
+    title: presentation.title,
+    author: metadata.author || 'AI Presentation Platform',
+    subject: presentation.description || 'AI Generated Presentation',
+    creator: 'AI Presentation Platform'
+  })
+
+  // Professional cover page
+  createProfessionalCoverPage(pdf, presentation, pageWidth, pageHeight)
+
+  // Generate content slides with professional formatting
+  slides.forEach((slide, index) => {
+    pdf.addPage()
+    createProfessionalSlide(pdf, slide, index + 1, slides.length, pageWidth, pageHeight)
+  })
+
+  // Add metadata footer page
+  if (metadata.audience_level || metadata.presentation_style) {
+    pdf.addPage()
+    createMetadataPage(pdf, presentation, pageWidth, pageHeight)
+  }
+
+  // Download with professional filename
+  const filename = `${(presentation.title || 'Presentation').replace(/[^a-zA-Z0-9]/g, '_')}_Professional.pdf`
+  pdf.save(filename)
+}
+
+/**
+ * Create professional cover page following consulting standards
+ */
+function createProfessionalCoverPage(
+  pdf: jsPDF, 
+  presentation: PresentationData, 
+  pageWidth: number, 
+  pageHeight: number
+): void {
+  const centerX = pageWidth / 2
+  const metadata = presentation.content?.metadata || {}
+
+  // Professional background with subtle gradient effect
+  pdf.setFillColor(PROFESSIONAL_COLORS.PRIMARY_BLUE)
+  pdf.rect(0, 0, pageWidth, 60, 'F')
+  
+  pdf.setFillColor(PROFESSIONAL_COLORS.LIGHT_BLUE)
+  pdf.rect(0, 60, pageWidth, pageHeight - 60, 'F')
+
+  // Main title with professional typography
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(TYPOGRAPHY.H1_SIZE)
+  pdf.setTextColor(PROFESSIONAL_COLORS.WHITE_TEXT)
+  
+  const titleLines = pdf.splitTextToSize(presentation.title, pageWidth - (LAYOUT.MARGIN * 2))
+  const titleStartY = 35
+  pdf.text(titleLines, centerX, titleStartY, { align: 'center' })
+
+  // Subtitle/description with professional spacing
+  if (presentation.description) {
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(TYPOGRAPHY.BODY_SIZE)
+    pdf.setTextColor(PROFESSIONAL_COLORS.PRIMARY_TEXT)
+    
+    const descLines = pdf.splitTextToSize(presentation.description, pageWidth - (LAYOUT.MARGIN * 3))
+    pdf.text(descLines, centerX, 100, { align: 'center' })
+  }
+
+  // Professional metadata display
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(TYPOGRAPHY.CAPTION_SIZE)
+  pdf.setTextColor(PROFESSIONAL_COLORS.SECONDARY_TEXT)
+  
+  let metaY = pageHeight - 60
+  
+  if (metadata.audience_level) {
+    pdf.text(`Audience Level: ${metadata.audience_level}`, centerX, metaY, { align: 'center' })
+    metaY += 15
+  }
+  
+  if (metadata.company) {
+    pdf.text(`Organization: ${metadata.company}`, centerX, metaY, { align: 'center' })
+    metaY += 15
+  }
+  
+  // Professional date stamp
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+  pdf.text(currentDate, centerX, metaY, { align: 'center' })
+
+  // Slide count indicator
+  const slideCount = presentation.content?.slides?.length || 0
+  pdf.setFontSize(TYPOGRAPHY.CAPTION_SIZE)
+  pdf.text(`${slideCount} Slides`, centerX, metaY + 15, { align: 'center' })
+}
+
+/**
+ * Create professional slide layout following Pyramid Principle
+ */
+function createProfessionalSlide(
+  pdf: jsPDF,
+  slide: Slide,
+  slideNumber: number,
+  totalSlides: number,
+  pageWidth: number,
+  pageHeight: number
+): void {
+  // Professional header with brand color
+  pdf.setFillColor(PROFESSIONAL_COLORS.PRIMARY_BLUE)
+  pdf.rect(0, 0, pageWidth, 25, 'F')
+
+  // Slide number (top right)
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(TYPOGRAPHY.CAPTION_SIZE)
+  pdf.setTextColor(PROFESSIONAL_COLORS.WHITE_TEXT)
+  pdf.text(`${slideNumber} / ${totalSlides}`, pageWidth - LAYOUT.MARGIN, 15, { align: 'right' })
+
+  // Slide title with professional hierarchy
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(TYPOGRAPHY.H2_SIZE)
+  pdf.setTextColor(PROFESSIONAL_COLORS.PRIMARY_TEXT)
+  
+  const titleLines = pdf.splitTextToSize(slide.title, pageWidth - (LAYOUT.MARGIN * 2))
+  pdf.text(titleLines, LAYOUT.MARGIN, 50)
+
+  // Content area with structured layout
+  let contentY = 75
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(TYPOGRAPHY.BODY_SIZE)
+  pdf.setTextColor(PROFESSIONAL_COLORS.PRIMARY_TEXT)
+
+  // Professional bullet points with proper indentation
+  slide.content.forEach((item, index) => {
+    // Bullet point with professional styling
+    pdf.setFillColor(PROFESSIONAL_COLORS.ACCENT_BLUE)
+    pdf.circle(LAYOUT.MARGIN + 5, contentY - 2, 2, 'F')
+    
+    // Content text with proper spacing
+    const itemLines = pdf.splitTextToSize(item, pageWidth - LAYOUT.MARGIN * 2 - LAYOUT.BULLET_INDENT)
+    pdf.text(itemLines, LAYOUT.MARGIN + LAYOUT.BULLET_INDENT, contentY)
+    
+    contentY += (itemLines.length * 8) + LAYOUT.PARAGRAPH_SPACING
+  })
+
+  // Speaker notes section (if available)
+  if (slide.speaker_notes && contentY < pageHeight - 80) {
+    contentY += LAYOUT.SECTION_SPACING
+    
+    // Section header
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(TYPOGRAPHY.H3_SIZE)
+    pdf.setTextColor(PROFESSIONAL_COLORS.ACCENT_BLUE)
+    pdf.text('Speaker Notes', LAYOUT.MARGIN, contentY)
+    
+    contentY += 15
+    
+    // Notes content with subtle background
+    const notesHeight = 40
+    pdf.setFillColor(PROFESSIONAL_COLORS.LIGHT_GRAY)
+    pdf.rect(LAYOUT.MARGIN, contentY - 5, pageWidth - (LAYOUT.MARGIN * 2), notesHeight, 'F')
+    
+    pdf.setFont('helvetica', 'italic')
+    pdf.setFontSize(TYPOGRAPHY.CAPTION_SIZE)
+    pdf.setTextColor(PROFESSIONAL_COLORS.SECONDARY_TEXT)
+    
+    const notesLines = pdf.splitTextToSize(slide.speaker_notes, pageWidth - (LAYOUT.MARGIN * 2) - 10)
+    pdf.text(notesLines, LAYOUT.MARGIN + 5, contentY + 5)
+  }
+
+  // Visual suggestion with professional styling
+  if (slide.visual_suggestion && contentY < pageHeight - 50) {
+    const remainingSpace = pageHeight - contentY - LAYOUT.MARGIN
+    if (remainingSpace > 25) {
+      pdf.setFont('helvetica', 'italic')
+      pdf.setFontSize(TYPOGRAPHY.CAPTION_SIZE)
+      pdf.setTextColor(PROFESSIONAL_COLORS.MEDIUM_GRAY)
+      
+      const visualLines = pdf.splitTextToSize(
+        `Visual Suggestion: ${slide.visual_suggestion}`,
+        pageWidth - (LAYOUT.MARGIN * 2)
+      )
+      pdf.text(visualLines, LAYOUT.MARGIN, pageHeight - 30)
+    }
+  }
+
+  // Professional footer line
+  pdf.setDrawColor(PROFESSIONAL_COLORS.LIGHT_GRAY)
+  pdf.setLineWidth(0.5)
+  pdf.line(LAYOUT.MARGIN, pageHeight - 15, pageWidth - LAYOUT.MARGIN, pageHeight - 15)
+}
+
+/**
+ * Create metadata summary page
+ */
+function createMetadataPage(
+  pdf: jsPDF,
+  presentation: PresentationData,
+  pageWidth: number,
+  pageHeight: number
+): void {
+  const metadata = presentation.content?.metadata || {}
+  const centerX = pageWidth / 2
+
+  // Page title
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(TYPOGRAPHY.H2_SIZE)
+  pdf.setTextColor(PROFESSIONAL_COLORS.PRIMARY_TEXT)
+  pdf.text('Presentation Details', centerX, 50, { align: 'center' })
+
+  // Metadata display with professional formatting
+  let detailY = 80
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(TYPOGRAPHY.BODY_SIZE)
+  
+  const details = [
+    { label: 'Title', value: presentation.title },
+    { label: 'Description', value: presentation.description },
+    { label: 'Audience Level', value: metadata.audience_level },
+    { label: 'Presentation Style', value: metadata.presentation_style },
+    { label: 'Topic', value: metadata.topic },
+    { label: 'Author', value: metadata.author },
+    { label: 'Generated', value: new Date().toLocaleString() }
+  ]
+
+  details.forEach(detail => {
+    if (detail.value) {
+      pdf.setTextColor(PROFESSIONAL_COLORS.ACCENT_BLUE)
+      pdf.text(`${detail.label}:`, LAYOUT.MARGIN, detailY)
+      
+      pdf.setTextColor(PROFESSIONAL_COLORS.PRIMARY_TEXT)
+      pdf.text(detail.value, LAYOUT.MARGIN + 60, detailY)
+      
+      detailY += 20
+    }
+  })
+}
+
+/**
+ * Generate McKinsey/BCG-grade PowerPoint with consulting-level formatting
+ */
+export const exportToPPTX = async (presentation: PresentationData): Promise<void> => {
+  const pptx = new PptxGenJS()
+  
+  // Configure professional presentation properties
+  const metadata = presentation.content?.metadata || {}
+  pptx.author = metadata.author || 'AI Presentation Platform'
+  pptx.company = metadata.company || 'Professional Services'
+  pptx.title = presentation.title
+  pptx.subject = presentation.description || 'Executive Presentation'
+  pptx.revision = '1.0'
+  
+  // Set professional slide dimensions (16:9 widescreen for modern displays)
+  pptx.defineLayout({ name: 'PROFESSIONAL_16x9', width: 13.33, height: 7.5 })
+  pptx.layout = 'PROFESSIONAL_16x9'
+
+  // CONSULTING-GRADE MASTER SLIDE TEMPLATES
+  
+  // McKinsey-Style Title Master with corporate branding
+  pptx.defineSlideMaster({
+    title: 'EXECUTIVE_TITLE_MASTER',
+    background: { fill: PROFESSIONAL_COLORS.PRIMARY_BLUE },
+    objects: [
+      // Executive-level branding bar
+      {
+        rect: {
+          x: 0, y: '90%', w: '100%', h: '10%',
+          fill: { color: PROFESSIONAL_COLORS.DARK_GRAY }
+        }
+      },
+      // Professional title area with enhanced typography
+      {
+        placeholder: {
+          options: { 
+            name: 'title', 
+            type: 'title', 
+            x: '8%', 
+            y: '25%', 
+            w: '84%', 
+            h: '20%',
+            fontSize: 44,
+            fontFace: 'Calibri',
+            bold: true,
+            color: PROFESSIONAL_COLORS.WHITE_TEXT,
+            align: 'center'
+          },
+          text: 'Executive Presentation Title'
+        }
+      },
+      // Sophisticated subtitle with professional spacing
+      {
+        placeholder: {
+          options: { 
+            name: 'subtitle', 
+            type: 'body', 
+            x: '10%', 
+            y: '50%', 
+            w: '80%', 
+            h: '12%',
+            fontSize: 20,
+            fontFace: 'Calibri',
+            color: PROFESSIONAL_COLORS.WHITE_TEXT,
+            align: 'center',
+            italic: true
+          },
+          text: 'Strategic Insights & Recommendations'
+        }
+      },
+      // Executive footer with enhanced branding
+      {
+        text: {
+          text: 'CONFIDENTIAL & PROPRIETARY',
+          options: {
+            x: '4%', y: '92%', w: '35%', h: '6%',
+            fontSize: 11, 
+            color: PROFESSIONAL_COLORS.WHITE_TEXT,
+            fontFace: 'Calibri', 
+            bold: true,
+            italic: true
+          }
+        }
+      },
+      // Professional date with corporate styling
+      {
+        text: {
+          text: new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long', 
+            day: 'numeric'
+          }),
+          options: {
+            x: '60%', y: '92%', w: '36%', h: '6%',
+            fontSize: 11, 
+            color: PROFESSIONAL_COLORS.WHITE_TEXT,
+            fontFace: 'Calibri', 
+            align: 'right',
+            bold: true
+          }
+        }
+      }
+    ]
+  })
+
+  // BCG-Style Content Master with sophisticated layout
+  pptx.defineSlideMaster({
+    title: 'EXECUTIVE_CONTENT_MASTER',
+    background: { fill: PROFESSIONAL_COLORS.WHITE_TEXT },
+    objects: [
+      // Executive header with professional styling
+      {
+        rect: {
+          x: 0, y: 0, w: '100%', h: '15%',
+          fill: { color: PROFESSIONAL_COLORS.PRIMARY_BLUE }
+        }
+      },
+      // Professional slide title with enhanced typography
+      {
+        placeholder: {
+          options: { 
+            name: 'title', 
+            type: 'title', 
+            x: '4%', 
+            y: '2%', 
+            w: '75%', 
+            h: '11%',
+            fontSize: 32,
+            fontFace: 'Calibri',
+            bold: true,
+            color: PROFESSIONAL_COLORS.WHITE_TEXT
+          },
+          text: 'Strategic Analysis & Insights'
+        }
+      },
+      // Sophisticated slide number with corporate styling
+      {
+        rect: {
+          x: '82%', y: '3%', w: '15%', h: '9%',
+          fill: { color: PROFESSIONAL_COLORS.ACCENT_BLUE }
+        }
+      },
+  // Executive content area with professional margins
+      {
+        placeholder: {
+          options: { 
+            name: 'body', 
+            type: 'body', 
+            x: '6%', 
+            y: '18%', 
+            w: '88%', 
+            h: '60%',
+            fontSize: 24,
+            fontFace: 'Calibri',
+            color: PROFESSIONAL_COLORS.PRIMARY_TEXT
+          },
+          text: '• Strategic recommendations and key insights\n• Data-driven analysis and market intelligence\n• Implementation roadmap and success metrics'
+        }
+      },
+      // Executive footer with sophisticated styling
+      {
+        rect: {
+          x: 0, y: '85%', w: '100%', h: '15%',
+          fill: { color: PROFESSIONAL_COLORS.LIGHT_GRAY }
+        }
+      },
+      // Professional separator line
+      {
+        line: {
+          x: '4%', y: '85%', w: '92%', h: 0,
+          line: { 
+            color: PROFESSIONAL_COLORS.PRIMARY_BLUE, 
+            width: 3
+          }
+        }
+      },
+      // Corporate branding with enhanced typography
+      {
+        text: {
+          text: 'AI PRESENTATION PLATFORM | EXECUTIVE EDITION',
+          options: {
+            x: '4%', y: '88%', w: '60%', h: '8%',
+            fontSize: 11, 
+            color: PROFESSIONAL_COLORS.DARK_GRAY,
+            fontFace: 'Calibri', 
+            bold: true,
+            italic: true
+          }
+        }
+      }
+    ]
+  })
+
+  // McKinsey-Style Section Divider Master
+  pptx.defineSlideMaster({
+    title: 'EXECUTIVE_SECTION_MASTER',
+    background: { fill: PROFESSIONAL_COLORS.ACCENT_BLUE },
+    objects: [
+      // Executive section title with dramatic typography
+      {
+        placeholder: {
+          options: { 
+            name: 'title', 
+            type: 'title', 
+            x: '8%', 
+            y: '30%', 
+            w: '84%', 
+            h: '25%',
+            fontSize: 48,
+            fontFace: 'Calibri',
+            bold: true,
+            color: PROFESSIONAL_COLORS.WHITE_TEXT,
+            align: 'center'
+          },
+          text: 'Strategic Section'
+        }
+      },
+      // Sophisticated decorative element
+      {
+        rect: {
+          x: '25%', y: '60%', w: '50%', h: '1%',
+          fill: { color: PROFESSIONAL_COLORS.WHITE_TEXT }
+        }
+      },
+      // Executive section description
+      {
+        text: {
+          text: 'Strategic Analysis & Market Intelligence',
+          options: {
+            x: '10%', y: '68%', w: '80%', h: '12%',
+            fontSize: 18, 
+            color: PROFESSIONAL_COLORS.WHITE_TEXT,
+            fontFace: 'Calibri', 
+            align: 'center', 
+            italic: true
+          }
+        }
+      }
+    ]
+  })
+
+  // BCG-Style Executive Summary Master
+  pptx.defineSlideMaster({
+    title: 'EXECUTIVE_SUMMARY_MASTER',
+    background: { fill: PROFESSIONAL_COLORS.WHITE_TEXT },
+    objects: [
+      // Executive header with corporate styling
+      {
+        rect: {
+          x: 0, y: 0, w: '100%', h: '18%',
+          fill: { color: PROFESSIONAL_COLORS.PRIMARY_BLUE }
+        }
+      },
+      // Professional title with enhanced typography
+      {
+        placeholder: {
+          options: { 
+            name: 'title', 
+            type: 'title', 
+            x: '6%', 
+            y: '3%', 
+            w: '88%', 
+            h: '12%',
+            fontSize: 36,
+            fontFace: 'Calibri',
+            bold: true,
+            color: PROFESSIONAL_COLORS.WHITE_TEXT,
+            align: 'center'
+          },
+          text: 'Executive Summary & Key Takeaways'
+        }
+      },
+      // Two-column executive layout
+      {
+        placeholder: {
+          options: { 
+            name: 'leftContent', 
+            type: 'body', 
+            x: '6%', 
+            y: '22%', 
+            w: '42%', 
+            h: '55%',
+            fontSize: 20,
+            fontFace: 'Calibri',
+            color: PROFESSIONAL_COLORS.PRIMARY_TEXT
+          },
+          text: '• Strategic recommendations\n• Market analysis insights\n• Implementation roadmap'
+        }
+      },
+      {
+        placeholder: {
+          options: { 
+            name: 'rightContent', 
+            type: 'body', 
+            x: '52%', 
+            y: '22%', 
+            w: '42%', 
+            h: '55%',
+            fontSize: 20,
+            fontFace: 'Calibri',
+            color: PROFESSIONAL_COLORS.PRIMARY_TEXT
+          },
+          text: '• Success metrics & KPIs\n• Risk mitigation strategies\n• Next steps & timeline'
+        }
+      },
+      // Professional vertical separator
+      {
+        line: {
+          x: '50%', y: '22%', w: 0, h: '55%',
+          line: { 
+            color: PROFESSIONAL_COLORS.LIGHT_GRAY, 
+            width: 2
+          }
+        }
+      },
+      // Executive call-to-action area
+      {
+        rect: {
+          x: '8%', y: '82%', w: '84%', h: '12%',
+          fill: { color: PROFESSIONAL_COLORS.LIGHT_BLUE }
+        }
+      },
+      {
+        text: {
+          text: 'QUESTIONS & STRATEGIC DISCUSSION',
+          options: {
+            x: '8%', y: '85%', w: '84%', h: '6%',
+            fontSize: 22, 
+            color: PROFESSIONAL_COLORS.PRIMARY_BLUE,
+            fontFace: 'Calibri', 
+            align: 'center', 
+            bold: true
+          }
+        }
+      }
+    ]
+  })
+
+
+
+  const slides = presentation.content?.slides || []
+
+  // Generate executive-grade slides with consulting standards
+  createExecutiveTitleSlide(pptx, presentation)
+
+  // Add strategically formatted content slides
+  slides.forEach((slide, index) => {
+    createExecutiveContentSlide(pptx, slide, index + 1, slides.length)
+  })
+
+  // Add executive summary slide
+  if (slides.length > 0) {
+    createExecutiveSummarySlide(pptx, presentation, slides.length)
+  }
+
+  // Download with professional filename
+  const filename = `${(presentation.title || 'Presentation').replace(/[^a-zA-Z0-9]/g, '_')}_Professional.pptx`
+  await pptx.writeFile({ fileName: filename })
+}
+
+/**
+ * Create executive-grade title slide with McKinsey/BCG-level branding
+ */
+function createExecutiveTitleSlide(pptx: PptxGenJS, presentation: PresentationData): void {
+  const titleSlide = pptx.addSlide({ masterName: 'EXECUTIVE_TITLE_MASTER' })
+  const metadata = presentation.content?.metadata || {}
+
+  // Executive title with consulting-grade typography
+  titleSlide.addText(presentation.title, {
+    placeholder: 'title',
+    fontSize: 44,
+    bold: true,
+    align: 'center',
+    color: PROFESSIONAL_COLORS.WHITE_TEXT,
+    fontFace: 'Calibri'
+  })
+
+  // Professional subtitle with strategic positioning
+  if (presentation.description) {
+    titleSlide.addText(presentation.description, {
+      placeholder: 'subtitle',
+      fontSize: 20,
+      align: 'center',
+      color: PROFESSIONAL_COLORS.WHITE_TEXT,
+      fontFace: 'Calibri',
+      italic: true
+    })
+  }
+
+  // Executive metadata with sophisticated layout
+  const executiveMetadata = []
+  if (metadata.audience_level) executiveMetadata.push(`AUDIENCE: ${metadata.audience_level.toUpperCase()}`)
+  if (metadata.company) executiveMetadata.push(`ORGANIZATION: ${metadata.company.toUpperCase()}`)
+  if (metadata.author) executiveMetadata.push(`PRESENTED BY: ${metadata.author.toUpperCase()}`)
+  
+  const executiveDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).toUpperCase()
+  executiveMetadata.push(executiveDate)
+
+  if (executiveMetadata.length > 0) {
+    titleSlide.addText(executiveMetadata.join('  |  '), {
+      x: '8%',
+      y: '72%',
+      w: '84%',
+      h: '8%',
+      fontSize: 14,
+      align: 'center',
+      color: PROFESSIONAL_COLORS.WHITE_TEXT,
+      fontFace: 'Calibri',
+      bold: true,
+      italic: true
+    })
+  }
+
+  // Executive slide count with professional styling
+  const slideCount = presentation.content?.slides?.length || 0
+  titleSlide.addText(`${slideCount} STRATEGIC SLIDES`, {
+    x: '8%',
+    y: '82%',
+    w: '84%',
+    h: '5%',
+    fontSize: 12,
+    align: 'center',
+    color: PROFESSIONAL_COLORS.WHITE_TEXT,
+    fontFace: 'Calibri',
+    bold: true
+  })
+}
+
+/**
+ * Create executive-grade content slide with consulting-level layout
+ */
+function createExecutiveContentSlide(
+  pptx: PptxGenJS, 
+  slide: Slide, 
+  slideNumber: number, 
+  totalSlides: number
+): void {
+  const contentSlide = pptx.addSlide({ masterName: 'EXECUTIVE_CONTENT_MASTER' })
+  
+  // Executive slide title with consulting-grade typography
+  contentSlide.addText(slide.title, {
+    placeholder: 'title',
+    fontSize: 32,
+    bold: true,
+    color: PROFESSIONAL_COLORS.WHITE_TEXT,
+    fontFace: 'Calibri'
+  })
+
+  // Executive slide number with sophisticated styling
+  contentSlide.addText(`${slideNumber} / ${totalSlides}`, {
+    x: '82%',
+    y: '3%',
+    w: '15%',
+    h: '9%',
+    fontSize: 16,
+    align: 'center',
+    color: PROFESSIONAL_COLORS.WHITE_TEXT,
+    fontFace: 'Calibri',
+    bold: true,
+    valign: 'middle'
+  })
+
+  // Professional PowerPoint bullet list - Using simple string format for reliability
+  const bulletText = slide.content.join('\n')
+  
+  contentSlide.addText(bulletText, {
+    x: 0.6, // Professional left margin
+    y: 2.2, // Starting Y position
+    w: 8.5, // Professional content width
+    h: 4.0, // Total height for bullet list
+    bullet: true,
+    fontSize: 20,
+    fontFace: 'Calibri',
+    color: PROFESSIONAL_COLORS.PRIMARY_TEXT,
+    valign: 'top',
+    lineSpacing: 28,     // Professional 28pt line spacing
+    paraSpaceBefore: 4,  // 4pt spacing before
+    paraSpaceAfter: 6,   // 6pt spacing after
+    margin: [0.25, 0, 0, 0]  // 0.25" left margin for proper indentation
+  })
+
+  // Executive speaker notes with consulting guidance
+  if (slide.speaker_notes) {
+    const executiveNotes = `
+EXECUTIVE PRESENTATION GUIDANCE:
+
+${slide.speaker_notes}
+
+CONSULTING DELIVERY STANDARDS:
+• Open with the key insight (30-second rule)
+• Support with data and evidence
+• Close with actionable next steps
+• Maintain eye contact with decision makers
+• Use the "So what?" test for every point
+
+STRATEGIC MESSAGING:
+• Connect each point to business value
+• Address potential objections proactively
+• Emphasize urgency and competitive advantage
+• Prepare for executive-level questions
+
+TIMING & FLOW:
+Recommended: 2-3 minutes per slide
+Transition: Bridge to next strategic point
+Q&A: Be prepared for deep-dive questions
+
+AUDIENCE ENGAGEMENT:
+• Start with strategic question or insight
+• Use relevant industry examples
+• Reference competitive landscape
+• Connect to organization's strategic priorities`
+    
+    contentSlide.addNotes(executiveNotes)
+  }
+
+  // Visual enhancement suggestion with executive styling
+  if (slide.visual_suggestion) {
+    contentSlide.addText('VISUAL ENHANCEMENT OPPORTUNITY', {
+      x: '6%',
+      y: '82%',
+      w: '35%',
+      h: '4%',
+      fontSize: 11,
+      bold: true,
+      color: PROFESSIONAL_COLORS.ACCENT_BLUE,
+      fontFace: 'Calibri'
+    })
+    
+    contentSlide.addText(slide.visual_suggestion, {
+      x: '42%',
+      y: '82%',
+      w: '52%',
+      h: '4%',
+      fontSize: 10,
+      italic: true,
+      color: PROFESSIONAL_COLORS.MEDIUM_GRAY,
+      fontFace: 'Calibri'
+    })
+  }
+}
+
+/**
+ * Create executive summary slide using McKinsey/BCG-style formatting
+ */
+function createExecutiveSummarySlide(
+  pptx: PptxGenJS, 
+  presentation: PresentationData, 
+  slideCount: number
+): void {
+  // Create clean slide without complex master template
+  const summarySlide = pptx.addSlide()
+  
+  // Professional blue header background
+  summarySlide.addShape(pptx.ShapeType.rect, {
+    x: 0, y: 0, w: '100%', h: 1.2,
+    fill: { color: PROFESSIONAL_COLORS.PRIMARY_BLUE }
+  })
+  
+  // Executive summary title with precise positioning
+  summarySlide.addText('Executive Summary & Strategic Takeaways', {
+    x: 0, y: 0.2, w: '100%', h: 0.8,
+    fontSize: 32,
+    bold: true,
+    align: 'center',
+    color: PROFESSIONAL_COLORS.WHITE_TEXT,
+    fontFace: 'Calibri',
+    valign: 'middle'
+  })
+
+  // Slide number in top right
+  summarySlide.addText(`${slideCount}`, {
+    x: '85%', y: 0.1, w: '12%', h: 0.4,
+    fontSize: 18,
+    bold: true,
+    align: 'center',
+    color: PROFESSIONAL_COLORS.WHITE_TEXT,
+    fontFace: 'Calibri'
+  })
+
+  // LEFT COLUMN HEADER
+  summarySlide.addText('Strategic Recommendations', {
+    x: 0.5, y: 1.5, w: 4.0, h: 0.4,
+    fontSize: 20,
+    bold: true,
+    color: PROFESSIONAL_COLORS.PRIMARY_BLUE,
+    fontFace: 'Calibri'
+  })
+
+  // LEFT COLUMN CONTENT - Using simple newline approach for reliability
+  const leftColumnText = [
+    '• Data-driven insights have been comprehensively analyzed',
+    '• Strategic recommendations align with market opportunities',
+    '• Implementation roadmap provides clear execution path',
+    '• Success metrics established for performance tracking',
+    '• Risk mitigation strategies address key challenges'
+  ].join('\n\n')
+
+  summarySlide.addText(leftColumnText, {
+    x: 0.5, y: 2.0, w: 4.2, h: 3.5,
+    fontSize: 16,
+    fontFace: 'Calibri',
+    color: PROFESSIONAL_COLORS.PRIMARY_TEXT,
+    valign: 'top',
+    lineSpacing: 24
+  })
+
+  // RIGHT COLUMN HEADER  
+  summarySlide.addText('Next Steps & Actions', {
+    x: 5.0, y: 1.5, w: 4.0, h: 0.4,
+    fontSize: 20,
+    bold: true,
+    color: PROFESSIONAL_COLORS.PRIMARY_BLUE,
+    fontFace: 'Calibri'
+  })
+
+  // RIGHT COLUMN CONTENT - Using simple newline approach for reliability
+  const rightColumnText = [
+    '• Executive alignment on strategic priorities achieved',
+    '• Stakeholder engagement plan ready for execution',
+    '• Resource allocation optimized for maximum impact',
+    '• Timeline and milestones clearly defined',
+    '• Competitive advantage positioning established'
+  ].join('\n\n')
+
+  summarySlide.addText(rightColumnText, {
+    x: 5.0, y: 2.0, w: 4.2, h: 3.5,
+    fontSize: 16,
+    fontFace: 'Calibri',
+    color: PROFESSIONAL_COLORS.PRIMARY_TEXT,
+    valign: 'top',
+    lineSpacing: 24
+  })
+
+  // Executive speaker notes for summary
+  const executiveSummaryNotes = `
+EXECUTIVE SUMMARY DELIVERY GUIDANCE:
+
+OPENING APPROACH:
+• Begin with: "Let me synthesize the key strategic insights..."
+• Emphasize the collective value of the analysis
+• Connect insights to organizational strategic objectives
+
+KEY MESSAGES TO REINFORCE:
+• Highlight the most compelling business case elements
+• Reinforce data-driven foundation of recommendations
+• Emphasize competitive timing and market opportunity
+• Stress alignment with organizational priorities
+
+STAKEHOLDER ENGAGEMENT:
+• "Which strategic priority resonates most strongly?"
+• "What additional considerations should we address?"
+• "How do these recommendations align with your vision?"
+• "What concerns or questions do you have about implementation?"
+
+TRANSITION TO NEXT STEPS:
+• Confirm executive alignment on strategic direction
+• Establish clear ownership and accountability
+• Set expectations for follow-up and execution
+• Schedule deep-dive sessions for detailed planning
+
+CLOSING PROTOCOL:
+• "Thank you for your strategic leadership and insights"
+• "I'm committed to supporting successful execution"
+• "Looking forward to driving meaningful business impact"
+• Provide clear contact information and next steps
+
+TIMING GUIDANCE:
+Summary: 3-4 minutes
+Q&A Discussion: 15-20 minutes
+Next Steps Planning: 5-10 minutes
+
+EXECUTIVE SUCCESS METRICS:
+• Clear decision on strategic direction
+• Commitment to resource allocation
+• Defined timeline for implementation
+• Assigned executive sponsors and ownership`
+  
+  summarySlide.addNotes(executiveSummaryNotes)
+}
+
+/**
+ * Generate professional HTML export with responsive design
+ */
+export const exportToHTML = async (presentation: PresentationData): Promise<void> => {
+  const slides = presentation.content?.slides || []
+  const metadata = presentation.content?.metadata || {}
+  
+  const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="${presentation.description || 'Professional AI-generated presentation'}">
+    <meta name="author" content="${metadata.author || 'AI Presentation Platform'}">
+    <title>${presentation.title} - Professional Presentation</title>
+    <style>
+        /* Enhanced Professional CSS Framework - 2025 Standards */
+        :root {
+            /* Professional Color Palette - Extended */
+            --color-primary-blue: #003366;
+            --color-accent-blue: #0066CC;
+            --color-light-blue: #E6F2FF;
+            --color-dark-gray: #2C3E50;
+            --color-medium-gray: #7F8C8D;
+            --color-light-gray: #ECF0F1;
+            --color-white: #FFFFFF;
+            --color-success: #27AE60;
+            --color-warning: #E67E22;
+            
+            /* Extended color palette for enhanced visuals */
+            --color-navy: #1B2631;
+            --color-slate: #34495E;
+            --color-silver: #BDC3C7;
+            --color-cream: #FEF9E7;
+            
+            /* Typography Scale with Golden Ratio */
+            --font-size-h1: 2.618rem;
+            --font-size-h2: 2rem;
+            --font-size-h3: 1.618rem;
+            --font-size-body: 1.125rem;
+            --font-size-caption: 0.875rem;
+            --font-size-small: 0.75rem;
+            
+            /* Enhanced Spacing System (8pt grid) */
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --spacing-xl: 3rem;
+            --spacing-xxl: 4rem;
+            
+            /* Advanced Layout Variables */
+            --max-width: 1200px;
+            --content-width: 800px;
+            --border-radius: 12px;
+            --border-radius-lg: 16px;
+            
+            /* Professional Shadow System */
+            --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-strong: 0 8px 40px rgba(0, 0, 0, 0.12);
+            --shadow-dramatic: 0 16px 64px rgba(0, 0, 0, 0.16);
+            
+            /* Animation and Transition Variables */
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
+            
+            /* Progress indicator */
+            --scroll-progress: 0%;
+        }caption: 0.875rem;
+            
+            /* Spacing System */
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --spacing-xl: 3rem;
+            
+            /* Layout */
+            --max-width: 1200px;
+            --border-radius: 12px;
+            --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-strong: 0 8px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', 'Helvetica Neue', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--color-primary-blue) 0%, var(--color-accent-blue) 100%);
+            color: var(--color-dark-gray);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* Enhanced Progress Indicator */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--color-accent-blue), var(--color-success));
+            width: var(--scroll-progress);
+            z-index: 1000;
+            transition: width var(--transition-fast);
+            box-shadow: 0 0 10px rgba(0, 102, 204, 0.5);
+        }
+        
+        /* Professional Table of Contents */
+        .table-of-contents {
+            position: fixed;
+            left: var(--spacing-lg);
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            box-shadow: var(--shadow-strong);
+            z-index: 100;
+            max-height: 60vh;
+            overflow-y: auto;
+            width: 200px;
+            transition: transform var(--transition-normal), opacity var(--transition-normal);
+        }
+        
+        .table-of-contents.hidden {
+            transform: translateY(-50%) translateX(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .toc-title {
+            font-size: var(--font-size-small);
+            font-weight: 700;
+            color: var(--color-primary-blue);
+            margin-bottom: var(--spacing-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .toc-item {
+            display: block;
+            padding: var(--spacing-xs) 0;
+            color: var(--color-dark-gray);
+            text-decoration: none;
+            font-size: var(--font-size-caption);
+            border-left: 3px solid transparent;
+            padding-left: var(--spacing-sm);
+            transition: all var(--transition-fast);
+        }
+        
+        .toc-item:hover {
+            color: var(--color-accent-blue);
+            border-left-color: var(--color-accent-blue);
+            background: var(--color-light-blue);
+        }
+        
+        .toc-item.active {
+            color: var(--color-primary-blue);
+            border-left-color: var(--color-primary-blue);
+            background: var(--color-light-blue);
+            font-weight: 600;
+        }
+        
+        /* Professional Container System */
+        .presentation-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+            position: relative;
+        }
+        
+        /* Executive Summary Header */
+        .presentation-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+            background: var(--color-white);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-strong);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .presentation-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--color-primary-blue), var(--color-accent-blue));
+        }
+        
+        .presentation-title {
+            font-size: var(--font-size-h1);
+            font-weight: 700;
+            color: var(--color-primary-blue);
+            margin-bottom: var(--spacing-md);
+            letter-spacing: -0.02em;
+        }
+        
+        .presentation-subtitle {
+            font-size: var(--font-size-body);
+            color: var(--color-medium-gray);
+            max-width: 800px;
+            margin: 0 auto var(--spacing-md);
+            line-height: 1.7;
+        }
+        
+        .presentation-metadata {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+            margin-top: var(--spacing-lg);
+        }
+        
+        .metadata-item {
+            background: var(--color-light-blue);
+            color: var(--color-primary-blue);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: 20px;
+            font-size: var(--font-size-caption);
+            font-weight: 600;
+        }
+        
+        /* Professional Slide System */
+        .slide {
+            background: var(--color-white);
+            margin: var(--spacing-lg) 0;
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .slide:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-strong);
+        }
+        
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--color-accent-blue), var(--color-primary-blue));
+        }
+        
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .slide-number {
+            background: var(--color-accent-blue);
+            color: var(--color-white);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: 20px;
+            font-size: var(--font-size-caption);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        .slide-title {
+            font-size: var(--font-size-h2);
+            font-weight: 700;
+            color: var(--color-primary-blue);
+            margin-bottom: var(--spacing-md);
+            line-height: 1.3;
+            flex: 1;
+            margin-right: var(--spacing-md);
+        }
+        
+        /* Professional Content Layout */
+        .slide-content {
+            font-size: var(--font-size-body);
+            line-height: 1.7;
+            color: var(--color-dark-gray);
+        }
+        
+        .slide-content ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .slide-content li {
+            margin: var(--spacing-sm) 0;
+            padding-left: var(--spacing-lg);
+            position: relative;
+            transition: transform 0.2s ease;
+        }
+        
+        .slide-content li:hover {
+            transform: translateX(4px);
+        }
+        
+        .slide-content li::before {
+            content: '▶';
+            color: var(--color-accent-blue);
+            font-weight: 700;
+            position: absolute;
+            left: 0;
+            top: 2px;
+            font-size: 0.8em;
+        }
+        
+        /* Enhanced Speaker Notes */
+        .speaker-notes {
+            margin-top: var(--spacing-xl);
+            padding: var(--spacing-lg);
+            background: linear-gradient(135deg, var(--color-light-gray), #F8F9FA);
+            border-left: 4px solid var(--color-accent-blue);
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            position: relative;
+        }
+        
+        .speaker-notes::before {
+            content: 'NOTES';
+            position: absolute;
+            top: var(--spacing-sm);
+            right: var(--spacing-sm);
+            font-size: 0.8em;
+            font-weight: bold;
+            color: var(--color-primary-blue);
+        }
+        
+        .speaker-notes-title {
+            font-weight: 700;
+            color: var(--color-primary-blue);
+            margin-bottom: var(--spacing-sm);
+            font-size: var(--font-size-body);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        
+        .speaker-notes-content {
+            color: var(--color-dark-gray);
+            font-style: italic;
+            line-height: 1.6;
+        }
+        
+        /* Visual Enhancement Suggestions */
+        .visual-suggestion {
+            margin-top: var(--spacing-lg);
+            padding: var(--spacing-md);
+            background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+            border: 1px solid var(--color-accent-blue);
+            border-radius: var(--border-radius);
+            position: relative;
+        }
+        
+        .visual-suggestion::before {
+            content: 'VISUAL';
+            position: absolute;
+            top: var(--spacing-sm);
+            right: var(--spacing-sm);
+            font-size: 0.8em;
+            font-weight: bold;
+            color: var(--color-primary-blue);
+        }
+        
+        .visual-suggestion-title {
+            font-weight: 700;
+            color: var(--color-primary-blue);
+            margin-bottom: var(--spacing-xs);
+            font-size: var(--font-size-caption);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .visual-suggestion-content {
+            color: var(--color-primary-blue);
+            font-size: var(--font-size-caption);
+            line-height: 1.5;
+        }
+        
+        /* Professional Summary Section */
+        .presentation-summary {
+            text-align: center;
+            margin-top: var(--spacing-xl);
+            padding: var(--spacing-xl);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius);
+            color: var(--color-dark-gray);
+            font-size: var(--font-size-caption);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-soft);
+        }
+        
+        .summary-title {
+            font-size: var(--font-size-h3);
+            font-weight: 700;
+            color: var(--color-primary-blue);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .summary-stats {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-lg);
+            margin-top: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: var(--font-size-h2);
+            font-weight: 700;
+            color: var(--color-accent-blue);
+            display: block;
+        }
+        
+        .stat-label {
+            color: var(--color-medium-gray);
+            font-size: var(--font-size-caption);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Navigation Enhancement */
+        .navigation-controls {
+            position: fixed;
+            bottom: var(--spacing-lg);
+            right: var(--spacing-lg);
+            display: flex;
+            gap: var(--spacing-xs);
+            z-index: 100;
+        }
+        
+        .nav-button {
+            background: var(--color-primary-blue);
+            color: var(--color-white);
+            border: none;
+            padding: var(--spacing-sm);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-soft);
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .nav-button:hover {
+            background: var(--color-accent-blue);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-strong);
+        }
+        
+        /* Responsive Design - Mobile First */
+        @media (max-width: 768px) {
+            .presentation-container {
+                padding: var(--spacing-sm);
+            }
+            
+            .presentation-title {
+                font-size: 1.8rem;
+            }
+            
+            .slide-title {
+                font-size: 1.4rem;
+            }
+            
+            .slide {
+                padding: var(--spacing-lg);
+                margin: var(--spacing-md) 0;
+            }
+            
+            .slide-header {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+            
+            .slide-number {
+                align-self: flex-end;
+            }
+            
+            .presentation-metadata {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .summary-stats {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+            
+            .slide {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                margin: var(--spacing-md) 0;
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+            
+            .navigation-controls {
+                display: none;
+            }
+            
+            .presentation-header::before,
+            .slide::before {
+                display: none;
+            }
+        }
+        
+        /* Accessibility Features */
+        @media (prefers-reduced-motion: reduce) {
+            .slide {
+                transition: none;
+            }
+            
+            .slide-content li {
+                transition: none;
+            }
+        }
+        
+        /* High Contrast Mode */
+        @media (prefers-contrast: high) {
+            :root {
+                --color-primary-blue: #000080;
+                --color-accent-blue: #0000FF;
+                --color-dark-gray: #000000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Professional Progress Indicator -->
+    <div class="progress-bar"></div>
+    
+    <!-- Interactive Table of Contents -->
+    <nav class="table-of-contents" id="tableOfContents">
+        <div class="toc-title">Contents</div>
+        <a href="#presentation-header" class="toc-item">Overview</a>
+        ${slides.map((slide, index) => 
+            '<a href="#slide-' + (index + 1) + '" class="toc-item">Slide ' + (index + 1) + ': ' + (slide.title.length > 25 ? slide.title.substring(0, 25) + '...' : slide.title) + '</a>'
+        ).join('')}
+        <a href="#presentation-summary" class="toc-item">Summary</a>
+    </nav>
+    
+    <div class="presentation-container">
+        <!-- Executive Summary Header -->
+        <header class="presentation-header">
+            <h1 class="presentation-title">${presentation.title}</h1>
+            ${presentation.description ? '<p class="presentation-subtitle">' + presentation.description + '</p>' : ''}
+            
+            <div class="presentation-metadata">
+                ${metadata.audience_level ? '<span class="metadata-item">Audience: ' + metadata.audience_level + '</span>' : ''}
+                ${metadata.presentation_style ? '<span class="metadata-item">Style: ' + metadata.presentation_style + '</span>' : ''}
+                ${metadata.topic ? '<span class="metadata-item">Topic: ' + metadata.topic + '</span>' : ''}
+                ${metadata.author ? '<span class="metadata-item">Author: ' + metadata.author + '</span>' : ''}
+                <span class="metadata-item">Generated: ${new Date().toLocaleDateString()}</span>
+            </div>
+        </header>
+        
+        <!-- Professional Slide Content -->
+        <main>
+            ${slides.map((slide, index) => 
+                '<article class="slide" id="slide-' + (index + 1) + '">' +
+                    '<div class="slide-header">' +
+                        '<h2 class="slide-title">' + slide.title + '</h2>' +
+                        '<span class="slide-number">Slide ' + (index + 1) + '</span>' +
+                    '</div>' +
+                    '<div class="slide-content">' +
+                        '<ul>' +
+                            slide.content.map(item => '<li>' + item + '</li>').join('') +
+                        '</ul>' +
+                    '</div>' +
+                    (slide.speaker_notes ? 
+                        '<section class="speaker-notes">' +
+                            '<h3 class="speaker-notes-title">SPEAKER GUIDANCE</h3>' +
+                            '<div class="speaker-notes-content">' + slide.speaker_notes + '</div>' +
+                        '</section>'
+                    : '') +
+                    (slide.visual_suggestion ? 
+                        '<aside class="visual-suggestion">' +
+                            '<div class="visual-suggestion-title">Visual Enhancement</div>' +
+                            '<div class="visual-suggestion-content">' + slide.visual_suggestion + '</div>' +
+                        '</aside>'
+                    : '') +
+                '</article>'
+            ).join('')}
+        </main>
+        
+        <!-- Professional Summary -->
+        <footer class="presentation-summary">
+            <h2 class="summary-title">Presentation Overview</h2>
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <span class="stat-number">${slides.length}</span>
+                    <span class="stat-label">Slides</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${metadata.audience_level || 'Professional'}</span>
+                    <span class="stat-label">Audience</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">${Math.ceil(slides.length * 2.5)} min</span>
+                    <span class="stat-label">Est. Duration</span>
+                </div>
+            </div>
+            
+            <p style="margin-top: var(--spacing-lg); color: var(--color-medium-gray);">
+                <strong>AI Presentation Platform</strong> | Professional Edition | Generated ${new Date().toLocaleDateString()}
+            </p>
+        </footer>
+    </div>
+    
+    <!-- Enhanced Navigation Controls -->
+    <div class="navigation-controls">
+        <button class="nav-button" onclick="scrollToTop()" title="Go to top" aria-label="Scroll to top">
+            ▲
+        </button>
+        <button class="nav-button" onclick="toggleTableOfContents()" title="Toggle contents" aria-label="Toggle table of contents">
+            TOC
+        </button>
+        <button class="nav-button" onclick="toggleFullscreen()" title="Toggle fullscreen" aria-label="Toggle fullscreen">
+            FULL
+        </button>
+        <button class="nav-button" onclick="window.print()" title="Print presentation" aria-label="Print presentation">
+            PRINT
+        </button>
+        <button class="nav-button" onclick="exportToPDF()" title="Export to PDF" aria-label="Export to PDF">
+            PDF
+        </button>
+    </div>
+    
+    <script>
+        // Enhanced Professional Presentation JavaScript - 2025 Edition
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePresentationFeatures();
+        });
+
+        function initializePresentationFeatures() {
+            setupProgressTracking();
+            setupSmoothNavigation();
+            setupKeyboardNavigation();
+            setupTableOfContents();
+            setupAccessibilityFeatures();
+            setupPresentationMode();
+        }
+
+        // Progress tracking with visual feedback
+        function setupProgressTracking() {
+            const progressBar = document.querySelector('.progress-bar');
+            
+            function updateProgress() {
+                const scrolled = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+                document.documentElement.style.setProperty('--scroll-progress', Math.min(scrolled, 100) + '%');
+                
+                // Update active TOC item
+                updateActiveTOCItem();
+            }
+            
+            window.addEventListener('scroll', updateProgress, { passive: true });
+            updateProgress(); // Initial call
+        }
+
+        // Smooth navigation with easing
+        function setupSmoothNavigation() {
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start',
+                            inline: 'nearest'
+                        });
+                    }
+                });
+            });
+        }
+
+        // Enhanced keyboard navigation
+        function setupKeyboardNavigation() {
+            document.addEventListener('keydown', function(e) {
+                const slides = document.querySelectorAll('.slide');
+                
+                switch(e.key) {
+                    case 'ArrowDown':
+                    case 'PageDown':
+                    case ' ': // Spacebar
+                        e.preventDefault();
+                        navigateToNextSlide(slides);
+                        break;
+                    case 'ArrowUp':
+                    case 'PageUp':
+                        e.preventDefault();
+                        navigateToPreviousSlide(slides);
+                        break;
+                    case 'Home':
+                        e.preventDefault();
+                        scrollToTop();
+                        break;
+                    case 'End':
+                        e.preventDefault();
+                        scrollToBottom();
+                        break;
+                    case 'f':
+                    case 'F':
+                        if (e.altKey) {
+                            e.preventDefault();
+                            toggleFullscreen();
+                        }
+                        break;
+                    case 't':
+                    case 'T':
+                        if (e.altKey) {
+                            e.preventDefault();
+                            toggleTableOfContents();
+                        }
+                        break;
+                    case 'p':
+                    case 'P':
+                        if (e.ctrlKey || e.metaKey) {
+                            // Let browser handle Ctrl+P for printing
+                            return;
+                        }
+                        break;
+                }
+            });
+        }
+
+        // Table of contents management
+        function setupTableOfContents() {
+            const tocItems = document.querySelectorAll('.toc-item');
+            tocItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Update active state
+                    tocItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        function updateActiveTOCItem() {
+            const slides = document.querySelectorAll('.slide');
+            const scrollPosition = window.scrollY + window.innerHeight / 2;
+            
+            let activeSlide = 0;
+            slides.forEach((slide, index) => {
+                const slideTop = slide.offsetTop;
+                const slideBottom = slideTop + slide.offsetHeight;
+                
+                if (scrollPosition >= slideTop && scrollPosition < slideBottom) {
+                    activeSlide = index + 1; // +1 because TOC starts with overview
+                }
+            });
+            
+            // Update TOC active state
+            const tocItems = document.querySelectorAll('.toc-item');
+            tocItems.forEach((item, index) => {
+                item.classList.toggle('active', index === activeSlide);
+            });
+        }
+
+        // Accessibility enhancements
+        function setupAccessibilityFeatures() {
+            // Add ARIA labels and roles
+            document.querySelectorAll('.slide').forEach((slide, index) => {
+                slide.setAttribute('role', 'article');
+                slide.setAttribute('aria-labelledby', 'slide-title-' + (index + 1));
+                
+                const title = slide.querySelector('.slide-title');
+                if (title) {
+                    title.id = 'slide-title-' + (index + 1);
+                }
+            });
+            
+            // Add skip links for screen readers
+            const skipLink = document.createElement('a');
+            skipLink.href = '#main-content';
+            skipLink.textContent = 'Skip to main content';
+            skipLink.className = 'skip-link';
+            skipLink.style.cssText = [
+                'position: absolute;',
+                'left: -10000px;',
+                'top: auto;',
+                'width: 1px;',
+                'height: 1px;',
+                'overflow: hidden;'
+            ].join(' ');
+            skipLink.addEventListener('focus', function() {
+                this.style.cssText = [
+                    'position: absolute;',
+                    'left: 6px;',
+                    'top: 7px;',
+                    'width: auto;',
+                    'height: auto;',
+                    'overflow: visible;',
+                    'background: var(--color-primary-blue);',
+                    'color: white;',
+                    'padding: 8px;',
+                    'border-radius: 4px;',
+                    'text-decoration: none;',
+                    'z-index: 10000;'
+                ].join(' ');
+            });
+            skipLink.addEventListener('blur', function() {
+                this.style.cssText = [
+                    'position: absolute;',
+                    'left: -10000px;',
+                    'top: auto;',
+                    'width: 1px;',
+                    'height: 1px;',
+                    'overflow: hidden;'
+                ].join(' ');
+            });
+            document.body.insertBefore(skipLink, document.body.firstChild);
+        }
+
+        // Presentation mode features
+        function setupPresentationMode() {
+            // Add presentation timer
+            let startTime = Date.now();
+            let timerInterval;
+            
+            function updateTimer() {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                
+                // Could add timer display if needed
+                console.log('Presentation time: ' + minutes + ':' + seconds.toString().padStart(2, '0'));
+            }
+            
+            // Start timer
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Navigation functions
+        function navigateToNextSlide(slides) {
+            const current = getCurrentSlideIndex(slides);
+            if (current < slides.length - 1) {
+                slides[current + 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                scrollToBottom();
+            }
+        }
+
+        function navigateToPreviousSlide(slides) {
+            const current = getCurrentSlideIndex(slides);
+            if (current > 0) {
+                slides[current - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                scrollToTop();
+            }
+        }
+
+        function getCurrentSlideIndex(slides) {
+            const scrollPosition = window.scrollY + window.innerHeight / 2;
+            for (let i = 0; i < slides.length; i++) {
+                const slide = slides[i];
+                const slideTop = slide.offsetTop;
+                const slideBottom = slideTop + slide.offsetHeight;
+                if (scrollPosition >= slideTop && scrollPosition < slideBottom) {
+                    return i;
+                }
+            }
+            return 0;
+        }
+
+        // Utility functions
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function scrollToBottom() {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        function toggleTableOfContents() {
+            const toc = document.getElementById('tableOfContents');
+            toc.classList.toggle('hidden');
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('Fullscreen not supported or failed:', err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function exportToPDF() {
+            // Prepare for PDF export
+            window.print();
+        }
+
+        // Handle fullscreen changes
+        document.addEventListener('fullscreenchange', function() {
+            const isFullscreen = !!document.fullscreenElement;
+            document.body.classList.toggle('fullscreen-mode', isFullscreen);
+        });
+
+        // Handle visibility changes (for presentation mode)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                console.log('Presentation paused');
+            } else {
+                console.log('Presentation resumed');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            // Recalculate progress on resize
+            const scrolled = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+            document.documentElement.style.setProperty('--scroll-progress', Math.min(scrolled, 100) + '%');
+        });
+    </script>
+</body>
+</html>`
+
+  // Create and download professional HTML file
+  const blob = new Blob([htmlContent], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${(presentation.title || 'Presentation').replace(/[^a-zA-Z0-9]/g, '_')}_Professional.html`
+  a.style.display = 'none'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+/**
+ * DEPRECATED: Export presentation as PNG or JPEG images using client-side html2canvas
+ * This function has been replaced by the iframe-based implementation in iframeExport.ts
+ * to eliminate screen painting/flashing issues.
+ */
+/*
+export const exportToImages = async (presentation: PresentationData, format: 'png' | 'jpeg'): Promise<void> => {
+  // This function has been replaced by iframe-based implementation
+  throw new Error('This function is deprecated. Use exportToImages from iframeExport.ts instead.');
+}
+*/
+  let loadingToast: any = null
+  
+  try {
+    // Show loading indicator
+    const toast = await import('react-hot-toast')
+    loadingToast = toast.default.loading(`Generating ${format.toUpperCase()} images...`, {
+      duration: Infinity,
+      style: {
+        background: '#1e293b',
+        color: '#f1f5f9',
+        border: '1px solid #334155'
+      }
+    })
+    
+    // Dynamically import html2canvas
+    const html2canvas = (await import('html2canvas')).default
+    
+    const slides = presentation.content?.slides || []
+    if (slides.length === 0) {
+      throw new Error('No slides found in presentation')
+    }
+
+    console.log(`🎨 Starting ${format.toUpperCase()} export for ${slides.length} slides...`)
+
+    const images: Array<{
+      slideNumber: number
+      filename: string
+      content: string
+      mimeType: string
+      slideTitle: string
+    }> = []
+
+    // Create completely hidden iframe for isolated rendering
+    const iframe = document.createElement('iframe')
+    iframe.style.cssText = `
+      position: absolute !important;
+      left: -9999px !important;
+      top: -9999px !important;
+      width: 1920px !important;
+      height: 1080px !important;
+      border: none !important;
+      background: white !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      z-index: -1000 !important;
+      pointer-events: none !important;
+    `
+    
+    // Add iframe to document
+    document.body.appendChild(iframe)
+    
+    // Wait for iframe to load
+    await new Promise((resolve) => {
+      iframe.onload = resolve
+      // Create minimal HTML document for iframe
+      iframe.srcdoc = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: Arial, sans-serif; }
+            </style>
+          </head>
+          <body></body>
+        </html>
+      `
+    })
+
+    try {
+      // Generate images for each slide
+      for (let i = 0; i < slides.length; i++) {
+        const slide = slides[i]
+        console.log(`🖼️ Generating image ${i + 1}/${slides.length}: ${slide.title}`)
+        
+        // Create slide element with html2canvas-compatible styling
+        const slideElement = createSlideElement(presentation, slide, i + 1, slides.length)
+        tempContainer.innerHTML = ''
+        tempContainer.appendChild(slideElement)
+        
+        // Brief wait for DOM to render
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // Temporarily move ON-SCREEN for html2canvas capture (invisible to user)
+        tempContainer.style.cssText = `
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 1920px !important;
+          height: 1080px !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          z-index: 9999 !important;
+          background: white !important;
+          overflow: hidden !important;
+          pointer-events: none !important;
+          user-select: none !important;
+        `
+        await new Promise(resolve => setTimeout(resolve, 50))
+        
+        // Convert to canvas with optimized settings for html2canvas
+        const canvas = await html2canvas(tempContainer, {
+          width: 1920,
+          height: 1080,
+          scale: 1,
+          backgroundColor: '#0f172a', // Set solid background as fallback
+          removeContainer: false,
+          logging: true, // Enable logging for debugging
+          useCORS: true,
+          allowTaint: true,
+          foreignObjectRendering: false, // Disable for better compatibility
+          windowWidth: 1920,
+          windowHeight: 1080,
+          scrollX: 0,
+          scrollY: 0,
+          ignoreElements: () => false
+        })
+        
+        // IMMEDIATELY move back OFF-SCREEN (completely hidden from users)
+        tempContainer.style.cssText = `
+          position: absolute !important;
+          left: -9999px !important;
+          top: -9999px !important;
+          width: 1920px !important;
+          height: 1080px !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          z-index: -1000 !important;
+          background: white !important;
+          overflow: hidden !important;
+          pointer-events: none !important;
+          user-select: none !important;
+          transform: translateZ(-1000px) !important;
+        `
+        
+        console.log(`📐 Canvas dimensions: ${canvas.width}x${canvas.height}`)
+        
+        // Convert canvas to blob
+        const mimeType = format === 'png' ? 'image/png' : 'image/jpeg'
+        const quality = format === 'jpeg' ? 0.95 : undefined
+        const blob = await new Promise<Blob>((resolve) => {
+          canvas.toBlob((blob) => resolve(blob!), mimeType, quality)
+        })
+        
+        console.log(`💾 Generated blob size: ${blob.size} bytes`)
+        
+        // Convert blob to base64
+        const arrayBuffer = await blob.arrayBuffer()
+        const uint8Array = new Uint8Array(arrayBuffer)
+        const base64Content = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)))
+        
+        const filename = `${(presentation.title || 'Presentation').replace(/[^a-zA-Z0-9]/g, '_')}_slide_${(i + 1).toString().padStart(2, '0')}.${format}`
+        
+        images.push({
+          slideNumber: i + 1,
+          filename,
+          content: base64Content,
+          mimeType,
+          slideTitle: slide.title
+        })
+        
+        console.log(`✅ Generated image ${i + 1}/${slides.length}: ${slide.title} (${blob.size} bytes)`)
+      }
+      
+      console.log(`🎯 Successfully generated ${images.length} images`)
+      
+      // Streamlined download process - automatically choose best option
+      if (images.length === 1) {
+        // Single slide - download directly
+        const image = images[0]
+        downloadBase64Image(image.content, image.filename, image.mimeType)
+      } else {
+        // Multiple slides - auto-download as ZIP for better UX (no popup)
+        console.log(`📦 Creating ZIP archive with ${images.length} slides...`)
+        await downloadImagesAsZip(images, presentation.title, format)
+        console.log(`✅ ZIP download completed successfully`)
+      }
+      
+    } finally {
+      // Clean up temporary container
+      if (tempContainer.parentNode) {
+        document.body.removeChild(tempContainer)
+      }
+    }
+    
+    // Dismiss loading and show success
+    if (loadingToast) {
+      const toast = await import('react-hot-toast')
+      toast.default.dismiss(loadingToast)
+      toast.default.success(`${format.toUpperCase()} export completed successfully!`, {
+        duration: 3000,
+        style: {
+          background: '#1e293b',
+          color: '#f1f5f9',
+          border: '1px solid #334155'
+        }
+      })
+    }
+    
+  } catch (error) {
+    // Dismiss loading on error
+    if (loadingToast) {
+      const toast = await import('react-hot-toast')
+      toast.default.dismiss(loadingToast)
+    }
+    console.error(`${format.toUpperCase()} export failed:`, error)
+    throw error
+  }
+}
+
+/**
+ * Escape HTML characters to prevent XSS
+ */
+function escapeHtml(text: string): string {
+  if (!text) return ''
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+/**
+ * Create a slide element for rendering with html2canvas-compatible styling
+ */
+function createSlideElement(presentation: PresentationData, slide: Slide, slideNumber: number, totalSlides: number): HTMLElement {
+  const slideDiv = document.createElement('div')
+  
+  // Use solid background instead of gradient for better html2canvas compatibility
+  slideDiv.style.cssText = `
+    font-family: Arial, Helvetica, sans-serif;
+    background: #0f172a;
+    color: white;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding: 80px;
+    box-sizing: border-box;
+  `
+  
+  // Create elements programmatically for better compatibility
+  
+  // Slide Number Badge
+  const badge = document.createElement('div')
+  badge.style.cssText = `
+    position: absolute;
+    top: 60px;
+    right: 60px;
+    width: 60px;
+    height: 60px;
+    background: #06b6d4;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 28px;
+    color: white;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  `
+  badge.textContent = slideNumber.toString()
+  slideDiv.appendChild(badge)
+  
+  // Slide Title - use solid color instead of gradient
+  const title = document.createElement('h1')
+  title.style.cssText = `
+    font-size: 72px;
+    font-weight: bold;
+    text-align: center;
+    margin: 0 0 60px 0;
+    color: #06b6d4;
+    line-height: 1.2;
+    max-width: 1600px;
+    word-wrap: break-word;
+  `
+  title.textContent = slide.title
+  slideDiv.appendChild(title)
+  
+  // Slide Content Container
+  const contentContainer = document.createElement('div')
+  contentContainer.style.cssText = `
+    max-width: 1400px;
+    font-size: 32px;
+    line-height: 1.6;
+    color: #e2e8f0;
+  `
+  
+  // Add bullet points
+  slide.content.forEach(item => {
+    const itemContainer = document.createElement('div')
+    itemContainer.style.cssText = `
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 30px;
+      padding: 10px 0;
+    `
+    
+    const bullet = document.createElement('span')
+    bullet.style.cssText = `
+      color: #06b6d4;
+      font-size: 40px;
+      margin-right: 30px;
+      margin-top: 5px;
+      font-weight: bold;
+    `
+    bullet.textContent = '•'
+    
+    const text = document.createElement('span')
+    text.style.cssText = `
+      flex: 1;
+      color: #e2e8f0;
+      line-height: 1.5;
+    `
+    text.textContent = item
+    
+    itemContainer.appendChild(bullet)
+    itemContainer.appendChild(text)
+    contentContainer.appendChild(itemContainer)
+  })
+  
+  slideDiv.appendChild(contentContainer)
+  
+  // Footer - remove backdrop-filter which isn't supported by html2canvas
+  const footer = document.createElement('div')
+  footer.style.cssText = `
+    position: absolute;
+    bottom: 40px;
+    left: 80px;
+    right: 80px;
+    text-align: center;
+    font-size: 24px;
+    color: #94a3b8;
+    border-top: 2px solid rgba(148, 163, 184, 0.3);
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: 10px;
+  `
+  footer.textContent = `${presentation.title} | Slide ${slideNumber} of ${totalSlides} | AI Presentation Platform`
+  slideDiv.appendChild(footer)
+  
+  return slideDiv
+}
+
+/**
+ * Download base64 encoded image
+ */
+function downloadBase64Image(base64Content: string, filename: string, mimeType: string) {
+  try {
+    // Convert base64 to blob
+    const byteCharacters = atob(base64Content)
+    const byteNumbers = new Array(byteCharacters.length)
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i)
+    }
+    const byteArray = new Uint8Array(byteNumbers)
+    const blob = new Blob([byteArray], { type: mimeType })
+    
+    // Create download link
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('Failed to download image:', error)
+    throw new Error('Failed to download image file')
+  }
+}
+
+/**
+ * Download multiple images as ZIP archive
+ */
+async function downloadImagesAsZip(images: any[], presentationTitle: string, format: string) {
+  try {
+    // Dynamically import JSZip
+    const JSZip = (await import('jszip')).default
+    const zip = new JSZip()
+    
+    // Add each image to the ZIP
+    images.forEach((image, index) => {
+      const byteCharacters = atob(image.content)
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i)
+      }
+      const byteArray = new Uint8Array(byteNumbers)
+      
+      zip.file(image.filename, byteArray)
+    })
+    
+    // Generate ZIP file
+    const content = await zip.generateAsync({ type: 'blob' })
+    
+    // Download ZIP file
+    const url = URL.createObjectURL(content)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${(presentationTitle || 'Presentation').replace(/[^a-zA-Z0-9]/g, '_')}_slides.zip`
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    
+  } catch (error) {
+    console.error('Failed to create ZIP archive:', error)
+    // Fallback to individual downloads
+    console.log('Falling back to individual downloads...')
+    for (let i = 0; i < images.length; i++) {
+      const image = images[i]
+      setTimeout(() => {
+        downloadBase64Image(image.content, image.filename, image.mimeType)
+      }, i * 500)
+    }
+  }
+}
+
+/**
+ * Main export function with loading state management
+ */
+export const downloadPresentation = async (
+  presentation: PresentationData, 
+  format: 'pdf' | 'pptx' | 'html' | 'png' | 'jpeg',
+  onProgress?: (message: string) => void
+): Promise<void> => {
+  try {
+    onProgress?.(`Preparing ${format.toUpperCase()} export...`)
+    
+    switch (format) {
+      case 'pdf':
+        await exportToPDF(presentation)
+        break
+      case 'pptx':
+        await exportToPPTX(presentation)
+        break
+      case 'html':
+        await exportToHTML(presentation)
+        break
+      case 'png':
+      case 'jpeg':
+        // PNG/JPEG export is now handled directly by iframeExport.ts
+        // This case should not be reached as the viewer calls exportToImages directly
+        throw new Error(`PNG/JPEG export is handled separately by the presentation viewer`)
+        break
+      default:
+        throw new Error(`Unsupported format: ${format}`)
+    }
+    
+    onProgress?.(`${format.toUpperCase()} downloaded successfully!`)
+  } catch (error) {
+    console.error(`Export to ${format} failed:`, error)
+    throw new Error(`Failed to export to ${format.toUpperCase()}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
