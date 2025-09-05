@@ -16690,7 +16690,7 @@ function shouldShowDeprecationWarning() {
 if (shouldShowDeprecationWarning()) {
   console.warn(`⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217`);
 }
-const supabaseUrl = "https://xhlpnnoskmewqkjriqxq.supabase.co";
+const supabaseUrl = "https://slidefast.ai/api";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhobHBubm9za21ld3FranJpcXhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTUwMTUsImV4cCI6MjA3MTM3MTAxNX0.p2nCOu1Bs63aVeKt0_Z5u7h28kMmCO_HSXkNiXfeMKQ";
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
