@@ -1,0 +1,22 @@
+CREATE TABLE presentation_templates (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    category VARCHAR(100) NOT NULL,
+    sub_category VARCHAR(100),
+    tags TEXT[],
+    template_data JSONB NOT NULL,
+    preview_image_url TEXT,
+    thumbnail_url TEXT,
+    is_premium BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
+    usage_count INTEGER DEFAULT 0,
+    rating DECIMAL(3,2) DEFAULT 0.0,
+    color_scheme VARCHAR(50),
+    style VARCHAR(50),
+    layout_type VARCHAR(50),
+    difficulty_level VARCHAR(20),
+    estimated_slides INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
