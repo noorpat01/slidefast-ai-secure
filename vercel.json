@@ -5,8 +5,8 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "installCommand": "npm install --legacy-peer-deps",
-        "buildCommand": "npm run build"
+        "installCommand": "npm install -g pnpm && pnpm install --prefer-offline",
+        "buildCommand": "pnpm run build:vercel"
       }
     }
   ]
