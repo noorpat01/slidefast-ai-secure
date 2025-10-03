@@ -65,7 +65,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
                   <Sparkles className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-white">Slidefast</span>
+                <span className="text-xl font-bold text-white">Slidefast AI</span>
               </Link>
             </div>
 
