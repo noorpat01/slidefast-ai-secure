@@ -1,7 +1,7 @@
 {
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist", 
-  "installCommand": "npm install",
+  "installCommand": "rm -f pnpm-lock.yaml yarn.lock && npm install",
   "framework": "vite",
   "headers": [
     {
