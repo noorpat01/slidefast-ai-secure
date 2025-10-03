@@ -5,8 +5,8 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "installCommand": "npm install -g pnpm && pnpm install --prefer-offline",
-        "buildCommand": "pnpm run build:vercel"
+        "installCommand": "npm install --legacy-peer-deps --timeout=300000",
+        "buildCommand": "npm run build:vercel"
       }
     }
   ]
