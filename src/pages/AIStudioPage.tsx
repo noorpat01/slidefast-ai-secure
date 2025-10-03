@@ -34,7 +34,13 @@ import {
   Cpu,
   BookOpen
 } from 'lucide-react'
-import { LoadingSpinner } from '../components/ui/LoadingSpinner'
+// Create a simple loading spinner component inline
+const LoadingSpinner = ({ size = "md", className = "" }: { size?: string; className?: string }) => {
+  const sizeClasses = size === "sm" ? "h-4 w-4" : "h-6 w-6"
+  return (
+    <div className={`animate-spin rounded-full ${sizeClasses} border-b-2 border-purple-500 ${className}`}></div>
+  )
+}
 
 export const AIStudioPage: React.FC = () => {
   const navigate = useNavigate()

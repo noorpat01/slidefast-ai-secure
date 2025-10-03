@@ -5,7 +5,7 @@ import { usePresentationStore } from '../../store/presentation'
 // Temporarily disabled - import { AISupportProvider } from '../ai-support/AISupportProvider'
 // Temporarily disabled - import { AISupportChat } from '../ai-support/AISupportChat'
 // Temporarily disabled - import { AIEnhancementProvider } from '../../contexts/AIEnhancementContext'
-import { MobileNavigation, FloatingActionButton } from './MobileNavigation'
+// Temporarily disabled - import { MobileNavigation, FloatingActionButton } from './MobileNavigation'
 // Temporarily use a simple mobile hook
 const useIsMobile = () => {
   return typeof window !== 'undefined' && window.innerWidth < 768
@@ -60,13 +60,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Floating Action Button - temporarily disabled */}
         {/* <FloatingActionButton /> */}
             
-            {/* AI Support Chat - positioned for mobile */}
-            <div className="fixed bottom-24 left-safe z-30">
-              <AISupportChat />
-            </div>
-          </div>
-        </AIEnhancementProvider>
-      </AISupportProvider>
+        {/* AI Support Chat - positioned for mobile */}
+        {/* <div className="fixed bottom-24 left-safe z-30">
+          <AISupportChat />
+        </div> */}
+      </div>
     )
   }
 
