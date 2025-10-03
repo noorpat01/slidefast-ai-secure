@@ -2,14 +2,8 @@ import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth'
 import { usePresentationStore } from '../../store/presentation'
-// Temporarily disabled - import { AISupportProvider } from '../ai-support/AISupportProvider'
-// Temporarily disabled - import { AISupportChat } from '../ai-support/AISupportChat'
-// Temporarily disabled - import { AIEnhancementProvider } from '../../contexts/AIEnhancementContext'
-// Temporarily disabled - import { MobileNavigation, FloatingActionButton } from './MobileNavigation'
-// Temporarily use a simple mobile hook
-const useIsMobile = () => {
-  return typeof window !== 'undefined' && window.innerWidth < 768
-}
+import { MobileNavigation } from './MobileNavigation'
+import { useIsMobile } from '../../hooks/use-mobile'
 import { 
   LayoutDashboard, 
   Presentation, 
@@ -45,25 +39,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const isActive = (href: string) => location.pathname === href
 
-  // Mobile Layout - simplified for now
+  // Mobile Layout - enabled with AI Studio
   if (isMobile) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        {/* Mobile Navigation - temporarily disabled */}
-        {/* <MobileNavigation /> */}
+        <MobileNavigation />
         
         {/* Main Content with proper spacing for fixed navigation */}
         <main className="flex-1 pt-16 pb-20 px-safe overflow-y-auto">
           {children}
         </main>
-        
-        {/* Floating Action Button - temporarily disabled */}
-        {/* <FloatingActionButton /> */}
-            
-        {/* AI Support Chat - positioned for mobile */}
-        {/* <div className="fixed bottom-24 left-safe z-30">
-          <AISupportChat />
-        </div> */}
       </div>
     )
   }
