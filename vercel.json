@@ -5,9 +5,15 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "installCommand": "npm install --legacy-peer-deps --timeout=300000",
-        "buildCommand": "npm run build:vercel"
+        "installCommand": "yarn install",
+        "buildCommand": "yarn run build:vercel"
       }
     }
-  ]
+  ],
+  "framework": null,
+  "functions": {
+    "pages/api/**/*.js": {
+      "maxDuration": 30
+    }
+  }
 }

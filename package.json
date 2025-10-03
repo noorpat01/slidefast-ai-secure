@@ -1,17 +1,18 @@
 {
-  "name": "react_repo",
+  "name": "slidefast-ai-secure",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "yarn@3.6.4",
   "scripts": {
-    "dev": "pnpm install --prefer-offline && vite",
-    "build": "pnpm install --prefer-offline && rm -rf node_modules/.vite-temp && tsc -b && vite build",
-    "build:prod": "pnpm install --prefer-offline && rm -rf node_modules/.vite-temp && tsc -b && BUILD_MODE=prod vite build",
+    "dev": "vite",
+    "build": "rm -rf node_modules/.vite-temp && tsc -b && vite build",
+    "build:prod": "rm -rf node_modules/.vite-temp && tsc -b && BUILD_MODE=prod vite build",
     "build:vercel": "tsc -b && vite build",
-    "lint": "pnpm install --prefer-offline && eslint .",
-    "preview": "pnpm install --prefer-offline && vite preview",
-    "install-deps": "pnpm install --prefer-offline",
-    "clean": "rm -rf node_modules .pnpm-store pnpm-lock.yaml && pnpm store prune"
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "install-deps": "yarn install",
+    "clean": "rm -rf node_modules yarn.lock .yarn && yarn cache clean"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
