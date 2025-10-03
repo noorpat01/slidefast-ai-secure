@@ -5,6 +5,8 @@ import { supabase } from './lib/supabase'
 import { useAuthStore } from './store/auth'
 import { AIEnhancedEditor } from './pages/AIEnhancedEditor'
 import { LoginPage } from './pages/LoginPage'
+import { AIStudioPage } from './pages/AIStudioPage'
+import { Layout } from './components/layout/Layout'
 import { motion } from 'framer-motion'
 import { Brain, Loader2 } from 'lucide-react'
 
@@ -96,11 +98,19 @@ function App() {
         <Routes>
           <Route 
             path="/" 
-            element={user ? <AIEnhancedEditor /> : <Navigate to="/login" replace />} 
+            element={user ? <Layout><AIEnhancedEditor /></Layout> : <Navigate to="/login" replace />} 
+          />
+          <Route 
+            path="/dashboard" 
+            element={user ? <Layout><AIEnhancedEditor /></Layout> : <Navigate to="/login" replace />} 
           />
           <Route 
             path="/editor" 
-            element={user ? <AIEnhancedEditor /> : <Navigate to="/login" replace />} 
+            element={user ? <Layout><AIEnhancedEditor /></Layout> : <Navigate to="/login" replace />} 
+          />
+          <Route 
+            path="/ai-studio" 
+            element={user ? <Layout><AIStudioPage /></Layout> : <Navigate to="/login" replace />} 
           />
           <Route 
             path="/login" 
