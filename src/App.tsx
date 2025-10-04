@@ -6,6 +6,12 @@ import { useAuthStore } from './store/auth'
 import { AIEnhancedEditor } from './pages/AIEnhancedEditor'
 import { LoginPage } from './pages/LoginPage'
 import { AIStudioPage } from './pages/AIStudioPage'
+import { DashboardPage } from './pages/DashboardPage'
+import { GeneratePage } from './pages/GeneratePage'
+import { TemplatesPage } from './pages/TemplatesPage'
+import { PresentationsPage } from './pages/PresentationsPage'
+import { ProfilePage } from './pages/ProfilePage'
+import { SubscriptionPage } from './pages/SubscriptionPage'
 import { Layout } from './components/layout/Layout'
 import { motion } from 'framer-motion'
 import { Brain, Loader2 } from 'lucide-react'
@@ -98,27 +104,47 @@ function App() {
         <Routes>
           <Route 
             path="/" 
-            element={user ? <Layout><AIEnhancedEditor /></Layout> : <Navigate to="/login" replace />} 
+            element={user ? <Layout><DashboardPage /></Layout> : <Navigate to="/login" replace />} 
           />
           <Route 
             path="/dashboard" 
-            element={user ? <Layout><AIEnhancedEditor /></Layout> : <Navigate to="/login" replace />} 
-          />
-          <Route 
-            path="/editor" 
-            element={user ? <Layout><AIEnhancedEditor /></Layout> : <Navigate to="/login" replace />} 
+            element={user ? <Layout><DashboardPage /></Layout> : <Navigate to="/login" replace />} 
           />
           <Route 
             path="/ai-studio" 
             element={user ? <Layout><AIStudioPage /></Layout> : <Navigate to="/login" replace />} 
           />
           <Route 
+            path="/generate" 
+            element={user ? <Layout><GeneratePage /></Layout> : <Navigate to="/login" replace />} 
+          />
+          <Route 
+            path="/templates" 
+            element={user ? <Layout><TemplatesPage /></Layout> : <Navigate to="/login" replace />} 
+          />
+          <Route 
+            path="/presentations" 
+            element={user ? <Layout><PresentationsPage /></Layout> : <Navigate to="/login" replace />} 
+          />
+          <Route 
+            path="/profile" 
+            element={user ? <Layout><ProfilePage /></Layout> : <Navigate to="/login" replace />} 
+          />
+          <Route 
+            path="/subscription" 
+            element={user ? <Layout><SubscriptionPage /></Layout> : <Navigate to="/login" replace />} 
+          />
+          <Route 
+            path="/editor" 
+            element={user ? <Layout><AIEnhancedEditor /></Layout> : <Navigate to="/login" replace />} 
+          />
+          <Route 
             path="/login" 
-            element={!user ? <LoginPage /> : <Navigate to="/" replace />} 
+            element={!user ? <LoginPage /> : <Navigate to="/login" replace />} 
           />
           <Route 
             path="*" 
-            element={<Navigate to="/" replace />} 
+            element={<Navigate to="/dashboard" replace />} 
           />
         </Routes>
       </div>

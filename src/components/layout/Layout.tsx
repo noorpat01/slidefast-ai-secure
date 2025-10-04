@@ -37,10 +37,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Subscription', href: '/subscription', icon: CreditCard }
   ]
 
-  // DEPLOYMENT TEST - Current time: 2025-10-05 03:36:47
-  console.log('🚀 LATEST DEPLOYMENT ACTIVE - Navigation items:', navigation.length)
-  console.log('🧠 AI Studio link should be visible:', navigation.find(item => item.name === 'AI Studio'))
-  console.log('⏰ Deploy timestamp: 2025-10-05 03:36:47')
+  // Navigation debugging
+  console.log('Navigation items loaded:', navigation.length)
 
   const isActive = (href: string) => location.pathname === href
 
@@ -70,7 +68,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
                   <Sparkles className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-white">🚀 Slidefast AI Studio</span>
+                <span className="text-xl font-bold text-white">Slidefast AI</span>
               </Link>
             </div>
 
@@ -82,7 +80,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    onClick={() => console.log('🗺️ Navigating to:', item.href)}
+
                     className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                       isActive(item.href)
                         ? 'bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-cyan-300 border border-cyan-500/30'
