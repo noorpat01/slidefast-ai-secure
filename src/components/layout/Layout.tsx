@@ -37,6 +37,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Subscription', href: '/subscription', icon: CreditCard }
   ]
 
+  // Debug logging to verify navigation array
+  console.log('🔧 Navigation items loaded:', navigation.length)
+  console.log('🧠 AI Studio item:', navigation.find(item => item.name === 'AI Studio'))
+
   const isActive = (href: string) => location.pathname === href
 
   // Mobile Layout - enabled with AI Studio
