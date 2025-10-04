@@ -37,9 +37,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Subscription', href: '/subscription', icon: CreditCard }
   ]
 
-  // Debug logging to verify navigation array
-  console.log('🔧 Navigation items loaded:', navigation.length)
-  console.log('🧠 AI Studio item:', navigation.find(item => item.name === 'AI Studio'))
+  // DEPLOYMENT TEST - Current time: 2025-10-05 03:36:47
+  console.log('🚀 LATEST DEPLOYMENT ACTIVE - Navigation items:', navigation.length)
+  console.log('🧠 AI Studio link should be visible:', navigation.find(item => item.name === 'AI Studio'))
+  console.log('⏰ Deploy timestamp: 2025-10-05 03:36:47')
 
   const isActive = (href: string) => location.pathname === href
 
@@ -69,7 +70,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
                   <Sparkles className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-white">Slidefast AI</span>
+                <span className="text-xl font-bold text-white">🚀 Slidefast AI Studio</span>
               </Link>
             </div>
 
